@@ -19,10 +19,10 @@ class bin_op(Node):
         self.right = right
         self.op = op
 
-class leaf(Node):
-    def __init__(self, value, cast=None):
-        self.value = value
-        self.type = cast
+# class leaf(Node):
+#     def __init__(self, value, cast=None):
+#         self.value = value
+#         self.type = cast
 
 
 # This class defines a complete listener for a parse tree produced by LittleParser.
@@ -30,12 +30,27 @@ class AST(ParseTreeListener):
 
     def __init__(self):
         self.roots = []
-        self.root = None
+        self.root = bin_op()
         self.walker = ParseTreeWalker()
 
     def add_root(self):
         self.roots.append(self.root)
         self.root = bin_op()
+
+    def print_ast(self):
+        for root in self.roots:
+            # print(root.op)
+            # print(root.left.op)
+            # print(root.right)
+            self.recurse(root)
+            print()
+
+    def recurse(self, node):
+        if not node: return
+        print("(", end="")
+        self.recurse(node.left)
+        print(node.op, end=")")
+        self.recurse(node.right)
 
     def visit_expr(self, child):
         # print("visit_expr")
@@ -48,12 +63,14 @@ class AST(ParseTreeListener):
         #         if child.getChild(i).getText() != '': real_children += 1
         #     print("real_children: {}".format(real_children))
         #     if real_children == 1: return child.getText()
-        
+
         if child.expr_prefix().empty(): return self.visit_factor(child.factor())
 
         node = bin_op()
         if child.expr_prefix().expr_prefix().empty():
-            node.left = child.expr_prefix().factor().postfix_expr().primary().getText()
+            # node.left = child.expr_prefix().factor().postfix_expr().primary().getText()
+            # node.left = self.visit_primary(child.expr_prefix().factor().postfix_expr().primary())
+            node.left = self.visit_factor(child.expr_prefix().factor())
             node.right = self.visit_factor(child.factor())
             node.op = child.expr_prefix().addop().getText()
         else:
@@ -67,12 +84,10 @@ class AST(ParseTreeListener):
 
         return node
 
-
             # for c in child.getChildren():
             #     print("c: {}".format(c.getText()))
 
     def visit_factor(self, child):
-        print("visit factor")
         if child.getChildCount() == 0:
             print("returning {}".format(child.getText()))
             return child.getText()
@@ -80,16 +95,20 @@ class AST(ParseTreeListener):
             real_children = 0
             for i in range(0, child.getChildCount()):
                 if child.getChild(i).getText() != '': real_children += 1
-            if real_children == 1: return child.getText()
+            if real_children == 1:
+                return bin_op(op=child.getText())
 
         node = bin_op()
         node.op = child.factor_prefix().mulop().getText()
         if child.factor_prefix().factor_prefix().empty():
-            node.left = child.factor_prefix().postfix_expr().primary().getText()
-            node.right = child.postfix_expr().primary().getText()
+            # node.left = child.factor_prefix().postfix_expr().primary().getText()
+            node.left = self.visit_primary(child.factor_prefix().postfix_expr().primary())
+            # node.right = child.postfix_expr().primary().getText()
+            node.right = self.visit_primary(child.postfix_expr().primary())
         else:
             node.left = self.visit_factor_prefix(child.factor_prefix())
-            node.right = child.postfix_expr().primary().getText()
+            # node.right = child.postfix_expr().primary().getText()
+            node.right = self.visit_primary(child.postfix_expr().primary())
 
         print("left: {}".format(node.left))
         print("op: {}".format(node.op))
@@ -98,7 +117,6 @@ class AST(ParseTreeListener):
         return node
 
     def visit_factor_prefix(self, child):
-        print("factor prefix")
         if child.getChildCount() == 0:
             print("returning {}".format(child.getText()))
             return child.getText()
@@ -106,16 +124,20 @@ class AST(ParseTreeListener):
             real_children = 0
             for i in range(0, child.getChildCount()):
                 if child.getChild(i).getText() != '': real_children += 1
-            if real_children == 1: return child.getText()
+            if real_children == 1:
+                return bin_op(op=child.getText())
 
         node = bin_op()
         node.op = child.factor_prefix().mulop().getText()
         if child.factor_prefix().factor_prefix().empty():
-            node.left = child.factor_prefix().postfix_expr().primary().getText()
-            node.right = child.postfix_expr().primary().getText()
+            # node.left = child.factor_prefix().postfix_expr().primary().getText()
+            node.left = self.visit_primary(child.factor_prefix().postfix_expr().primary())
+            # node.right = child.postfix_expr().primary().getText()
+            node.right = self.visit_primary(child.postfix_expr().primary())
         else:
             node.left = self.visit_factor_prefix(child.factor_prefix())
-            node.right = child.postfix_expr().primary().getText()
+            # node.right = child.postfix_expr().primary().getText()
+            node.right = self.visit_primary(child.postfix_expr().primary())
 
         print("left: {}".format(node.left))
         print("op: {}".format(node.op))
@@ -127,17 +149,19 @@ class AST(ParseTreeListener):
     def visit_expr_prefix(self, child):
         if child.getChildCount() == 0:
             print("returning {}".format(child.getText()))
-            return child.getText()
+            return bin_op(op=child.getText())
         else:
             real_children = 0
             for i in range(0, child.getChildCount()):
                 if child.getChild(i).getText() != '': real_children += 1
-            if real_children == 1: return child.getText()
+            if real_children == 1:
+                return bin_op(op=child.getText())
 
         node = bin_op()
         node.op = child.expr_prefix().addop().getText()
         if child.expr_prefix().expr_prefix().empty():
-            node.left = child.expr_prefix().factor().postfix_expr().primary().ident().getText()
+            # node.left = child.expr_prefix().factor().postfix_expr().primary().ident().getText()
+            node.left = self.visit_primary(child.expr_prefix().factor().postfix_expr().primary())
             node.right = self.visit_factor(child.factor())
         else:
             node.left = self.visit_expr_prefix(child.expr_prefix())
@@ -149,7 +173,11 @@ class AST(ParseTreeListener):
 
         return node
 
-
+    def visit_primary(self, child):
+        if child.expr():
+            return self.visit_expr(child.expr())
+        else:
+            return bin_op(op=child.getText())
 
 
     # Enter a parse tree produced by LittleParser#empty.
@@ -182,15 +210,16 @@ class AST(ParseTreeListener):
     # Enter a parse tree produced by LittleParser#assign_expr.
     def enterAssign_expr(self, ctx:LittleParser.Assign_exprContext):
         # return
-        self.add_root()
-        self.root.value = ':='
-        self.root.left = ctx.ident().getText()
+        self.root.op = ':='
+        self.root.left = bin_op(op=ctx.ident().getText())
         print("assigning to var {}".format(self.root.left))
         self.root.right = self.visit_expr(ctx.getChild(2))
         print("root right {}".format(self.root.right))
 
     # Exit a parse tree produced by LittleParser#assign_expr.
     def exitAssign_expr(self, ctx:LittleParser.Assign_exprContext):
+        print("out---------")
+        self.add_root()
         pass
 
     # Enter a parse tree produced by LittleParser#expr_prefix.
