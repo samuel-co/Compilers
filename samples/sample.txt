@@ -1,0 +1,14 @@
+PROGRAM p
+BEGIN
+
+	INT a,b,c;
+	
+	FUNCTION VOID main()
+	BEGIN
+        a := 20;
+        b := 10;
+        c := a + b;
+		a := a + b + c + 10;
+        b := a * b;
+	END
+END

@@ -1,0 +1,39 @@
+30	var a
+31	var b
+32	var c
+33	move 20 r0
+34	move r0 a
+35	move 30 r1		
+36	move r1 b		
+37	move 40 r2		
+38	move r2 c		
+39	move a r3		
+40	muli b r3		
+41	move a r4		
+42	muli b r4		
+43	move r4 r5		
+44	addi c r5		
+45	move r5 r6		
+46	divi a r6		
+47	move 20 r7		
+48	move c r8		
+49	addi r3 r8		
+50	move r8 r9		
+51	addi r6 r9		
+52	move r9 r10		
+53	addi r7 r10		
+54	move r10 c		
+55	move b r11		
+56	muli b r11		
+57	move r11 r12		
+58	addi a r12		
+59	move r12 b		
+60	move b r13		
+61	muli a r13		
+62	move r13 r14		
+63	divi a r14		
+64	move r14 a		
+65	sys writei c		
+66	sys writei b		
+67	sys writei a		
+68	sys halt

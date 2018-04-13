@@ -1,0 +1,65 @@
+52  var a	
+53	var b		
+54	var k		
+55	var g		
+56	var p		
+57	var u		
+58	str newline "\n"		
+59	label main 		
+60	move 1 r0		
+61	move r0 a		
+62	move 1 r1		
+63	move r1 b		
+64	label label1 		
+65	move 80 r2		
+66	cmpi a r2		
+67	jgt label2		
+68	move 1 r3		
+69	cmpi b r3		
+70	jne label3		
+71	move 1 r4		
+72	move r4 r5		
+73	muli a r5		
+74	move r5 g		
+75	sys writei g 		
+76	sys writes newline		
+77	label label3 		
+78	move 2 r6		
+79	cmpi b r6		
+80	jne label4		
+81	move 2 r7		
+82	move r7 r8		
+83	muli a r8		
+84	move r8 p		
+85	sys writei p 		
+86	sys writes newline		
+87	label label4 		
+88	move 3 r9		
+89	cmpi b r9		
+90	jne label5		
+91	move 3 r10		
+92	move r10 r11		
+93	muli a r11		
+94	move r11 k		
+95	sys writei k 		
+96	sys writes newline		
+97	jmp label6 		
+98	label label5 		
+99	move 4 r12		
+100	move r12 r13		
+101	muli a r13		
+102	move r13 u		
+103	sys writei u 		
+104	sys writes newline		
+105	label label6 		
+106	move 1 r14		
+107	move b r15		
+108	addi r14 r15		
+109	move r15 b		
+110	move 20 r16		
+111	move a r17		
+112	addi r16 r17		
+113	move r17 a		
+114	jmp label1 		
+115	label label2 		
+116	sys halt
