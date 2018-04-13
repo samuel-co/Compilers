@@ -49,11 +49,11 @@ class AST(ParseTreeListener):
         #     print("real_children: {}".format(real_children))
         #     if real_children == 1: return child.getText()
         
-        if child.expr_prefix().empty(): return self.visit_factor(child)
+        if child.expr_prefix().empty(): return self.visit_factor(child.factor())
 
         node = bin_op()
         if child.expr_prefix().expr_prefix().empty():
-            node.left = child.expr_prefix().factor().postfix_expr().primary().ident().getText()
+            node.left = child.expr_prefix().factor().postfix_expr().primary().getText()
             node.right = self.visit_factor(child.factor())
             node.op = child.expr_prefix().addop().getText()
         else:
@@ -85,11 +85,11 @@ class AST(ParseTreeListener):
         node = bin_op()
         node.op = child.factor_prefix().mulop().getText()
         if child.factor_prefix().factor_prefix().empty():
-            node.left = child.factor_prefix().postfix_expr().primary().ident().getText()
+            node.left = child.factor_prefix().postfix_expr().primary().getText()
             node.right = child.postfix_expr().primary().getText()
         else:
             node.left = self.visit_factor_prefix(child.factor_prefix())
-            node.right = child.postfix_expr().primary().ident().getText()
+            node.right = child.postfix_expr().primary().getText()
 
         print("left: {}".format(node.left))
         print("op: {}".format(node.op))
