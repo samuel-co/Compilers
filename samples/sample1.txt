@@ -13,8 +13,8 @@ BEGIN
 
 		WHILE(i != 10)
 			READ (p);
-			
-			IF (p > 10) 
+
+			IF (p > 10)
 				a := a + 1;
 			ELSE
       			b := b + 1;
