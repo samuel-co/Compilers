@@ -7,10 +7,6 @@ else:
 
 class Node:
     def __init__(self):
-        # self.parent = None
-        # self.value = None
-        # self.left_child = None
-        # self.right_child = None
         pass
 
 class bin_op(Node):
@@ -18,12 +14,6 @@ class bin_op(Node):
         self.left = left
         self.right = right
         self.op = op
-
-# class leaf(Node):
-#     def __init__(self, value, cast=None):
-#         self.value = value
-#         self.type = cast
-
 
 # This class defines a complete listener for a parse tree produced by LittleParser.
 class AST(ParseTreeListener):
@@ -38,147 +28,116 @@ class AST(ParseTreeListener):
         self.root = bin_op()
 
     def print_ast(self):
+        ''' Print out each tree conained within the roots list'''
         for root in self.roots:
-            # print(root.op)
-            # print(root.left.op)
-            # print(root.right)
             self.recurse(root)
             print()
 
     def recurse(self, node):
+        ''' Print out a AST from the bottom leftmost node to the rightmost node. Parenthesizes expressions
+            that are paired below an operation node'''
         if not node: return
-        print("(", end="")
+        if node.left and node.op != ':=': print("(", end="")
         self.recurse(node.left)
-        print(node.op, end=")")
+        print(node.op, end="")
         self.recurse(node.right)
+        if node.left and node.op != ':=': print(")", end="")
 
     def visit_expr(self, child):
-        # print("visit_expr")
-        # if child.getChildCount() == 0:
-        #     print("returning {}".format(child.getText()))
-        #     return child.getText()
-        # else:
-        #     real_children = 0
-        #     for i in range(0, child.getChildCount()):
-        #         if child.getChild(i).getText() != '': real_children += 1
-        #     print("real_children: {}".format(real_children))
-        #     if real_children == 1: return child.getText()
-
+        ''' Loop for handling the possible cases of an expression  node'''
         if child.expr_prefix().empty(): return self.visit_factor(child.factor())
 
         node = bin_op()
+        node.op = child.expr_prefix().addop().getText()
         if child.expr_prefix().expr_prefix().empty():
-            # node.left = child.expr_prefix().factor().postfix_expr().primary().getText()
-            # node.left = self.visit_primary(child.expr_prefix().factor().postfix_expr().primary())
             node.left = self.visit_factor(child.expr_prefix().factor())
             node.right = self.visit_factor(child.factor())
-            node.op = child.expr_prefix().addop().getText()
         else:
             node.left = self.visit_expr_prefix(child.expr_prefix())
             node.right = self.visit_factor(child.factor())
-            node.op = child.expr_prefix().addop().getText()
 
-        print("left: {}".format(node.left))
-        print("op: {}".format(node.op))
-        print("right: {}".format(node.right))
+        # print("left: {}".format(node.left))
+        # print("op: {}".format(node.op))
+        # print("right: {}".format(node.right))
 
         return node
 
-            # for c in child.getChildren():
-            #     print("c: {}".format(c.getText()))
-
     def visit_factor(self, child):
-        if child.getChildCount() == 0:
-            print("returning {}".format(child.getText()))
-            return child.getText()
-        else:
-            real_children = 0
-            for i in range(0, child.getChildCount()):
-                if child.getChild(i).getText() != '': real_children += 1
-            if real_children == 1:
-                return bin_op(op=child.getText())
+        ''' Loop for handling the possible cases of a factor node'''
+        if self.is_end(child): return bin_op(op=child.getText())
 
         node = bin_op()
         node.op = child.factor_prefix().mulop().getText()
         if child.factor_prefix().factor_prefix().empty():
-            # node.left = child.factor_prefix().postfix_expr().primary().getText()
             node.left = self.visit_primary(child.factor_prefix().postfix_expr().primary())
-            # node.right = child.postfix_expr().primary().getText()
             node.right = self.visit_primary(child.postfix_expr().primary())
         else:
             node.left = self.visit_factor_prefix(child.factor_prefix())
-            # node.right = child.postfix_expr().primary().getText()
             node.right = self.visit_primary(child.postfix_expr().primary())
 
-        print("left: {}".format(node.left))
-        print("op: {}".format(node.op))
-        print("right: {}".format(node.right))
+        # print("left: {}".format(node.left))
+        # print("op: {}".format(node.op))
+        # print("right: {}".format(node.right))
 
         return node
 
     def visit_factor_prefix(self, child):
-        if child.getChildCount() == 0:
-            print("returning {}".format(child.getText()))
-            return child.getText()
-        else:
-            real_children = 0
-            for i in range(0, child.getChildCount()):
-                if child.getChild(i).getText() != '': real_children += 1
-            if real_children == 1:
-                return bin_op(op=child.getText())
+        ''' Loop for handling the possible cases of a factor_prefix node'''
+        if self.is_end(child): return bin_op(op=child.getText())
 
         node = bin_op()
         node.op = child.factor_prefix().mulop().getText()
         if child.factor_prefix().factor_prefix().empty():
-            # node.left = child.factor_prefix().postfix_expr().primary().getText()
             node.left = self.visit_primary(child.factor_prefix().postfix_expr().primary())
-            # node.right = child.postfix_expr().primary().getText()
             node.right = self.visit_primary(child.postfix_expr().primary())
         else:
             node.left = self.visit_factor_prefix(child.factor_prefix())
-            # node.right = child.postfix_expr().primary().getText()
             node.right = self.visit_primary(child.postfix_expr().primary())
 
-        print("left: {}".format(node.left))
-        print("op: {}".format(node.op))
-        print("right: {}".format(node.right))
+        # print("left: {}".format(node.left))
+        # print("op: {}".format(node.op))
+        # print("right: {}".format(node.right))
 
         return node
 
 
     def visit_expr_prefix(self, child):
-        if child.getChildCount() == 0:
-            print("returning {}".format(child.getText()))
-            return bin_op(op=child.getText())
-        else:
-            real_children = 0
-            for i in range(0, child.getChildCount()):
-                if child.getChild(i).getText() != '': real_children += 1
-            if real_children == 1:
-                return bin_op(op=child.getText())
+        ''' Loop for handling the possible cases of a expr_prefix node'''
+        if self.is_end(child): return bin_op(op=child.getText())
 
         node = bin_op()
         node.op = child.expr_prefix().addop().getText()
         if child.expr_prefix().expr_prefix().empty():
-            # node.left = child.expr_prefix().factor().postfix_expr().primary().ident().getText()
             node.left = self.visit_primary(child.expr_prefix().factor().postfix_expr().primary())
             node.right = self.visit_factor(child.factor())
         else:
             node.left = self.visit_expr_prefix(child.expr_prefix())
             node.right = self.visit_factor(child.factor())
 
-        print("left: {}".format(node.left))
-        print("op: {}".format(node.op))
-        print("right: {}".format(node.right))
+        # print("left: {}".format(node.left))
+        # print("op: {}".format(node.op))
+        # print("right: {}".format(node.right))
 
         return node
 
     def visit_primary(self, child):
+        ''' Checks if our value is a node, or is a parenthesized expression. Returns the releveant construct.'''
         if child.expr():
             return self.visit_expr(child.expr())
         else:
             return bin_op(op=child.getText())
 
+    def is_end(self, child):
+        ''' Check if the current node is the last node in its branch. Returns true if so. '''
+        # if child.getChildCount() == 0:
+        #     return True
+        real_children = 0
+        for i in range(0, child.getChildCount()):
+            if child.getChild(i).getText() != '': real_children += 1
+        if real_children == 1:return True
+        return False
+
+#------------------------------LISTENER FUNCTIONS----------------------------------------------
 
     # Enter a parse tree produced by LittleParser#empty.
     def enterEmpty(self, ctx:LittleParser.EmptyContext):
@@ -191,15 +150,6 @@ class AST(ParseTreeListener):
 
      # Enter a parse tree produced by LittleParser#expr.
     def enterExpr(self, ctx:LittleParser.ExprContext):
-        # print("new expr, adding root")
-        # if not self.root:
-        #     self.add_root()
-        # self.root.left = self.visit(ctx.getChild(0))
-        # self.root.right = self.visit(ctx.getChild(1))
-        # self.visit(ctx.getChildren())
-        # self.root.left = self.walker.walk(self, ctx.expr_prefix())
-        # self.root.right = self.walker.walk(self, ctx.factor())
-        # print(self.root.left)
         pass
 
     # Exit a parse tree produced by LittleParser#expr.
@@ -209,35 +159,21 @@ class AST(ParseTreeListener):
 
     # Enter a parse tree produced by LittleParser#assign_expr.
     def enterAssign_expr(self, ctx:LittleParser.Assign_exprContext):
-        # return
         self.root.op = ':='
         self.root.left = bin_op(op=ctx.ident().getText())
-        print("assigning to var {}".format(self.root.left))
+        # print("assigning to var {}".format(self.root.left))
         self.root.right = self.visit_expr(ctx.getChild(2))
-        print("root right {}".format(self.root.right))
+        # print("root right {}".format(self.root.right))
 
     # Exit a parse tree produced by LittleParser#assign_expr.
     def exitAssign_expr(self, ctx:LittleParser.Assign_exprContext):
-        print("out---------")
         self.add_root()
         pass
 
     # Enter a parse tree produced by LittleParser#expr_prefix.
     def enterExpr_prefix(self, ctx:LittleParser.Expr_prefixContext):
         # print("entered")
-        # return "success"
         return
-        # print("expr_prefix")
-        # if ctx.empty():
-        #     print("empty")
-        # elif ctx.expr_prefix().empty():
-        #     print(ctx.factor().postfix_expr().primary().ident().getText())
-        #     self.root.left_child = ctx.factor().postfix_expr().primary().ident().getText()
-        #     self.root.value = ctx.addop().getText()
-        # else:
-        #     print("go deeper left")
-        #
-        # pass
 
     # Exit a parse tree produced by LittleParser#expr_prefix.
     def exitExpr_prefix(self, ctx:LittleParser.Expr_prefixContext):
