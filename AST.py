@@ -10,6 +10,7 @@ class bin_op():
         self.left = left
         self.right = right
         self.op = op
+        self.code = []
 
 class leaf():
     def __init__(self, value=None, in_type=None):
