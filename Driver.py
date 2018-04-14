@@ -16,7 +16,10 @@ def main(testcase_filename):
     walker = ParseTreeWalker()
     walker.walk(a, tree)
     a.print_ast()
-    #symbol_table_builder.print_symbol_table()
+
+    # symbol_table_builder = SymbolTableBuilder()
+    # walker.walk(symbol_table_builder, tree)
+    # symbol_table_builder.print_symbol_table()
 
 
     '''
