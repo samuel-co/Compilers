@@ -11,6 +11,7 @@ class bin_op():
         self.right = right
         self.op = op
         self.code = []
+        self.temp_register = None
 
 class leaf():
     def __init__(self, value=None, in_type=None):
@@ -184,7 +185,7 @@ class AST(ParseTreeListener):
         # return
         self.root.op = ':='
         # self.root.left = leaf(value=ctx.ident().getText())
-        self.root.left = self.visit_primary(ctx.ident()) 
+        self.root.left = self.visit_primary(ctx.ident())
         # self.root.right = leaf(value=ctx.strt().getText())
         self.root.right = self.visit_primary(ctx.strt())
 
