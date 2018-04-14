@@ -12,14 +12,15 @@ def main(testcase_filename):
     stream = CommonTokenStream(lexer)
     parser = LittleParser(stream)
     tree = parser.program()
-    a = AST()
     walker = ParseTreeWalker()
+
+    symbol_table_builder = SymbolTableBuilder()
+    walker.walk(symbol_table_builder, tree)
+    # symbol_table_builder.print_symbol_table()
+
+    a = AST(symbol_table_builder.symbol_table)
     walker.walk(a, tree)
     a.print_ast()
-
-    # symbol_table_builder = SymbolTableBuilder()
-    # walker.walk(symbol_table_builder, tree)
-    # symbol_table_builder.print_symbol_table()
 
 
     '''

@@ -12,15 +12,20 @@ class bin_op():
         self.op = op
 
 class leaf():
-    def __init__(self, value=None):
+    def __init__(self, value=None, in_type=None):
         self.value = value
+        self.type = in_type
 
 # This class defines a complete listener for a parse tree produced by LittleParser.
 class AST(ParseTreeListener):
 
-    def __init__(self):
+    def __init__(self, symbol_table):
+        self.symbol_table = self.parse_symbol_table(symbol_table)
         self.roots = []
         self.root = bin_op()
+
+    def parse_symbol_table(self, symbol_table):
+        return {symbol_table["GLOBAL"][var][0]:symbol_table["GLOBAL"][var][1] for var in range(len(symbol_table["GLOBAL"]))}
 
     def add_root(self):
         self.roots.append(self.root)
@@ -37,6 +42,7 @@ class AST(ParseTreeListener):
             that are paired below an operation node'''
         if type(node) is leaf:
             # print("[{}]".format(node.value), end="")
+            # print("{}[{}]".format(node.value, node.type), end="")
             print(node.value, end="")
             return
         if node.left and node.op != ':=': print("(", end="")
@@ -124,10 +130,10 @@ class AST(ParseTreeListener):
 
     def visit_primary(self, child):
         ''' Checks if our value is a node, or is a parenthesized expression. Returns the releveant construct.'''
-        if child.expr():
+        if type(child) is LittleParser.PrimaryContext and child.expr():
             return self.visit_expr(child.expr())
         else:
-            return leaf(value=child.getText())
+            return leaf(value=child.getText(), in_type=self.symbol_table[child.getText()] if child.getText() in self.symbol_table.keys() else "REAL")
 
     def is_end(self, child):
         ''' Check if the current node is the last node in its branch. Returns true if so. '''
@@ -162,7 +168,8 @@ class AST(ParseTreeListener):
     # Enter a parse tree produced by LittleParser#assign_expr.
     def enterAssign_expr(self, ctx:LittleParser.Assign_exprContext):
         self.root.op = ':='
-        self.root.left = leaf(value=ctx.ident().getText())
+        # self.root.left = leaf(value=ctx.ident().getText())
+        self.root.left = self.visit_primary(ctx.ident())
         # print("assigning to var {}".format(self.root.left))
         self.root.right = self.visit_expr(ctx.getChild(2))
         # print("root right {}".format(self.root.right))
@@ -175,8 +182,10 @@ class AST(ParseTreeListener):
     def enterString_decl(self, ctx:LittleParser.String_declContext):
         # return
         self.root.op = ':='
-        self.root.left = leaf(value=ctx.ident().getText())
-        self.root.right = leaf(value=ctx.strt().getText())
+        # self.root.left = leaf(value=ctx.ident().getText())
+        self.root.left = self.visit_primary(ctx.ident()) 
+        # self.root.right = leaf(value=ctx.strt().getText())
+        self.root.right = self.visit_primary(ctx.strt())
 
     # Exit a parse tree produced by LittleParser#string_decl.
     def exitString_decl(self, ctx:LittleParser.String_declContext):
