@@ -19,11 +19,6 @@ class stack():
         self.stack = self.stack[:-1]
         return out
 
-class control():
-    def __init__(self):
-        self.left = None
-        self.right = None
-
 class func_op():
     def __init__(self, name=None):
         self.name = name
@@ -71,6 +66,7 @@ class AST(ParseTreeListener):
         # self.control_q = queue.Queue()
         self.control_q = stack()
         self.head = None
+        self.indentation = 0
 
     def parse_symbol_table(self, symbol_table):
         return {symbol_table["GLOBAL"][var][0]:symbol_table["GLOBAL"][var][1] for var in range(len(symbol_table["GLOBAL"]))}
@@ -85,54 +81,75 @@ class AST(ParseTreeListener):
     def build_tree(self):
         print(self.tree)
 
+    def indent(self):
+        for _ in range(self.indentation): print(end="   ")
+
     def print_tree(self, child):
-        self.node_prints = {bin_op:self.recurse, func_op:self.print_func, while_op:self.print_while, sys_op:self.print_sys, if_op:self.print_if}
+        self.node_prints = {bin_op:self.print_bin, func_op:self.print_func, while_op:self.print_while, sys_op:self.print_sys, if_op:self.print_if}
         for item in child:
+            self.indent()
             self.node_prints[type(item)](item)
-            print()
 
     def print_func(self, child):
         print("entering function {}".format(child.name))
+        self.indentation += 1
         for item in child.body:
+            self.indent()
             self.node_prints[type(item)](item)
-            print()
+        self.indentation -= 1
+        self.indent()
         print("exiting function {}".format(child.name))
 
     def print_if(self, child):
-        print("entering if")
-        print("cond={}".format(child.cond))
+        print("entering if, cond = {}".format(child.cond))
+        self.indentation += 1
         for item in child.if_body:
+            self.indent()
             self.node_prints[type(item)](item)
-            print()
         if child.else_body:
+            self.indent()
             print("entering else")
             for item in child.else_body:
+                self.indent()
                 self.node_prints[type(item)](item)
-                print()
+            self.indent()
             print("exiting else")
+        self.indentation -= 1
+        self.indent()
         print("exiting if")
 
     def print_while(self, child):
-        print("entering while loop")
-        print("cond={}".format(child.cond))
+        print("entering while, cond = {}".format(child.cond))
+        self.indentation += 1
         for item in child.body:
+            self.indent()
             self.node_prints[type(item)](item)
-            print()
+        self.indentation -= 1
+        self.indent()
         print("exiting while loop")
 
     def print_sys(self, node):
+        # print("PRINTG THROUGH PRINT_SYS")
+        self.sys_recurse(node)
+        print()
+
+    def sys_recurse(self, node):
         if not node: return
         if type(node) is leaf:
-            print(node.value)
+            print(node.value, end=", ")
             return
         if type(node.left) is leaf: print(node.op, end=":")
-        self.print_sys(node.left)
+        self.sys_recurse(node.left)
         if type(node.right) is leaf: print(node.op, end=":")
-        self.print_sys(node.right)
+        self.sys_recurse(node.right)
+
+    def print_bin(self, node):
+        self.recurse(node)
+        print()
 
     def print_ast(self):
         ''' Print out each tree conained within the roots list'''
-        print("printing tree")
+        print("-----PRINTING TREE-----")
         self.print_tree(self.tree)
         return
         for root in self.roots:
