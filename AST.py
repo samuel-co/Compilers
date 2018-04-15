@@ -5,6 +5,41 @@ if __name__ is not None and "." in __name__:
 else:
     from LittleParser import LittleParser
 
+import queue
+
+class stack():
+    def __init__(self):
+        self.stack = []
+
+    def put(self, value):
+        self.stack.append(value)
+
+    def get(self):
+        out = self.stack[-1]
+        self.stack = self.stack[:-1]
+        return out
+
+class control():
+    def __init__(self):
+        self.left = None
+        self.right = None
+
+class func_op():
+    def __init__(self, name=None):
+        self.name = name
+        self.body = []
+
+class while_op():
+    def __init__(self):
+        self.cond = None
+        self.body = []
+
+class if_op():
+    def __init__(self):
+        self.cond = None
+        self.if_body = []
+        self.else_body = []
+
 class sys_op():
     def __init__(self, left=None,right=None, op=None):
         self.op = op
@@ -31,15 +66,75 @@ class AST(ParseTreeListener):
         self.symbol_table = self.parse_symbol_table(symbol_table)
         self.roots = []
         self.root = None
+        self.tree = []
+        self.current_list = self.tree
+        # self.control_q = queue.Queue()
+        self.control_q = stack()
+        self.head = None
 
     def parse_symbol_table(self, symbol_table):
         return {symbol_table["GLOBAL"][var][0]:symbol_table["GLOBAL"][var][1] for var in range(len(symbol_table["GLOBAL"]))}
 
     def add_root(self):
-        self.roots.append(self.root)
+        if type(self.root) is bin_op or type(self.root) is sys_op:
+            self.roots.append(self.root)
+            self.recurse(self.root)
+            print()
+        self.current_list.append(self.root)
+
+    def build_tree(self):
+        print(self.tree)
+
+    def print_tree(self, child):
+        self.node_prints = {bin_op:self.recurse, func_op:self.print_func, while_op:self.print_while, sys_op:self.print_sys, if_op:self.print_if}
+        for item in child:
+            self.node_prints[type(item)](item)
+            print()
+
+    def print_func(self, child):
+        print("entering function {}".format(child.name))
+        for item in child.body:
+            self.node_prints[type(item)](item)
+            print()
+        print("exiting function {}".format(child.name))
+
+    def print_if(self, child):
+        print("entering if")
+        print("cond={}".format(child.cond))
+        for item in child.if_body:
+            self.node_prints[type(item)](item)
+            print()
+        if child.else_body:
+            print("entering else")
+            for item in child.else_body:
+                self.node_prints[type(item)](item)
+                print()
+            print("exiting else")
+        print("exiting if")
+
+    def print_while(self, child):
+        print("entering while loop")
+        print("cond={}".format(child.cond))
+        for item in child.body:
+            self.node_prints[type(item)](item)
+            print()
+        print("exiting while loop")
+
+    def print_sys(self, node):
+        if not node: return
+        if type(node) is leaf:
+            print(node.value)
+            return
+        if type(node.left) is leaf: print(node.op, end=":")
+        self.print_sys(node.left)
+        if type(node.right) is leaf: print(node.op, end=":")
+        self.print_sys(node.right)
 
     def print_ast(self):
         ''' Print out each tree conained within the roots list'''
+        print("printing tree")
+        self.print_tree(self.tree)
+        return
         for root in self.roots:
             self.recurse(root)
             print()
@@ -50,8 +145,8 @@ class AST(ParseTreeListener):
         if not node: return
         if type(node) is leaf:
             # print("[{}]".format(node.value), end="")
-            print("{}[{}]".format(node.value, node.type), end="")
-            # print(node.value, end="")
+            # print("{}[{}]".format(node.value, node.type), end="")
+            print(node.value, end="")
             return
         if node.left and node.op != ':=': print("(", end="")
         self.recurse(node.left)
@@ -141,7 +236,8 @@ class AST(ParseTreeListener):
         if type(child) is LittleParser.PrimaryContext and child.expr():
             return self.visit_expr(child.expr())
         else:
-            return leaf(value=child.getText(), in_type=self.symbol_table[child.getText()] if child.getText() in self.symbol_table.keys() else "REAL")
+            return leaf(value=child.getText(), in_type=self.symbol_table[child.getText()] if child.getText() in self.symbol_table.keys() else "FLOAT" if '.'\
+                    in child.getText() else "INT")
 
     def is_end(self, child):
         ''' Check if the current node is the last node in its branch. Returns true if so. '''
@@ -161,6 +257,9 @@ class AST(ParseTreeListener):
         node.right = self.visit_id_list(child.id_tail(), op)
         return node
 
+    def visit_cond(self, child):
+        pass
+
 #------------------------------LISTENER FUNCTIONS----------------------------------------------
 
     # Enter a parse tree produced by LittleParser#empty.
@@ -169,6 +268,87 @@ class AST(ParseTreeListener):
 
     # Exit a parse tree produced by LittleParser#empty.
     def exitEmpty(self, ctx:LittleParser.EmptyContext):
+        pass
+
+    # Enter a parse tree produced by LittleParser#stmt_list.
+    def enterStmt_list(self, ctx:LittleParser.Stmt_listContext):
+        # print("enter stmt_list")
+        pass
+
+    # Enter a parse tree produced by LittleParser#func_decl.
+    def enterFunc_decl(self, ctx:LittleParser.Func_declContext):
+        print("enter func")
+        self.root = func_op(name="main")
+        self.add_root()
+        self.control_q.put(self.current_list)
+        self.current_list = self.root.body
+        pass
+
+    # Exit a parse tree produced by LittleParser#func_decl.
+    def exitFunc_decl(self, ctx:LittleParser.Func_declContext):
+        print("exit func")
+        self.current_list = self.control_q.get()
+        pass
+
+    # Exit a parse tree produced by LittleParser#stmt_list.
+    def exitStmt_list(self, ctx:LittleParser.Stmt_listContext):
+        # print("exit stmt_list")
+        pass
+
+    # Enter a parse tree produced by LittleParser#stmt.
+    def enterStmt(self, ctx:LittleParser.StmtContext):
+        # print("enter stmt")
+        pass
+
+    # Exit a parse tree produced by LittleParser#stmt.
+    def exitStmt(self, ctx:LittleParser.StmtContext):
+        # print("exit stmt")
+        pass
+
+    # Enter a parse tree produced by LittleParser#if_stmt.
+    def enterIf_stmt(self, ctx:LittleParser.If_stmtContext):
+        self.root = if_op()
+        self.root.cond = self.visit_cond(ctx.cond())
+        self.head = self.root
+        self.add_root()
+        self.control_q.put(self.current_list)
+        self.current_list = self.root.if_body
+        print("enter if")
+        pass
+
+    # Exit a parse tree produced by LittleParser#if_stmt.
+    def exitIf_stmt(self, ctx:LittleParser.If_stmtContext):
+        self.current_list = self.control_q.get()
+        print("exit if")
+        pass
+
+    # Enter a parse tree produced by LittleParser#else_part.
+    def enterElse_part(self, ctx:LittleParser.Else_partContext):
+        self.control_q.put(self.current_list)
+        self.current_list = self.head.else_body
+        print("enter else")
+        pass
+
+    # Exit a parse tree produced by LittleParser#else_part.
+    def exitElse_part(self, ctx:LittleParser.Else_partContext):
+        self.current_list = self.control_q.get()
+        print("exit else")
+        pass
+
+    # Enter a parse tree produced by LittleParser#while_stmt.
+    def enterWhile_stmt(self, ctx:LittleParser.While_stmtContext):
+        self.root = while_op()
+        self.cond = self.visit_cond(ctx.cond())
+        self.add_root()
+        self.control_q.put(self.current_list)
+        self.current_list = self.root.body
+        print("enter while")
+        pass
+
+    # Exit a parse tree produced by LittleParser#while_stmt.
+    def exitWhile_stmt(self, ctx:LittleParser.While_stmtContext):
+        print("exit while")
+        self.current_list = self.control_q.get()
         pass
 
 
@@ -200,10 +380,10 @@ class AST(ParseTreeListener):
         # return
         self.root = bin_op()
         self.root.op = ':='
-        # self.root.left = leaf(value=ctx.ident().getText())
-        self.root.left = self.visit_primary(ctx.ident())
-        # self.root.right = leaf(value=ctx.strt().getText())
-        self.root.right = self.visit_primary(ctx.strt())
+        self.root.left = leaf(value=ctx.ident().getText(), in_type="STRING")
+        # self.root.left = self.visit_primary(ctx.ident())
+        self.root.right = leaf(value=ctx.strt().getText(), in_type="STRING")
+        # self.root.right = self.visit_primary(ctx.strt())
 
     # Exit a parse tree produced by LittleParser#string_decl.
     def exitString_decl(self, ctx:LittleParser.String_declContext):
@@ -371,16 +551,6 @@ class AST(ParseTreeListener):
     def exitFunc_declarations(self, ctx:LittleParser.Func_declarationsContext):
         pass
 
-
-    # Enter a parse tree produced by LittleParser#func_decl.
-    def enterFunc_decl(self, ctx:LittleParser.Func_declContext):
-        pass
-
-    # Exit a parse tree produced by LittleParser#func_decl.
-    def exitFunc_decl(self, ctx:LittleParser.Func_declContext):
-        pass
-
-
     # Enter a parse tree produced by LittleParser#func_body.
     def enterFunc_body(self, ctx:LittleParser.Func_bodyContext):
         pass
@@ -388,26 +558,6 @@ class AST(ParseTreeListener):
     # Exit a parse tree produced by LittleParser#func_body.
     def exitFunc_body(self, ctx:LittleParser.Func_bodyContext):
         pass
-
-
-    # Enter a parse tree produced by LittleParser#stmt_list.
-    def enterStmt_list(self, ctx:LittleParser.Stmt_listContext):
-        pass
-
-    # Exit a parse tree produced by LittleParser#stmt_list.
-    def exitStmt_list(self, ctx:LittleParser.Stmt_listContext):
-        pass
-
-
-    # Enter a parse tree produced by LittleParser#stmt.
-    def enterStmt(self, ctx:LittleParser.StmtContext):
-        pass
-
-    # Exit a parse tree produced by LittleParser#stmt.
-    def exitStmt(self, ctx:LittleParser.StmtContext):
-        pass
-
-
     # Enter a parse tree produced by LittleParser#base_stmt.
     def enterBase_stmt(self, ctx:LittleParser.Base_stmtContext):
         pass
@@ -505,26 +655,6 @@ class AST(ParseTreeListener):
     # Exit a parse tree produced by LittleParser#mulop.
     def exitMulop(self, ctx:LittleParser.MulopContext):
         pass
-
-
-    # Enter a parse tree produced by LittleParser#if_stmt.
-    def enterIf_stmt(self, ctx:LittleParser.If_stmtContext):
-        pass
-
-    # Exit a parse tree produced by LittleParser#if_stmt.
-    def exitIf_stmt(self, ctx:LittleParser.If_stmtContext):
-        pass
-
-
-    # Enter a parse tree produced by LittleParser#else_part.
-    def enterElse_part(self, ctx:LittleParser.Else_partContext):
-        pass
-
-    # Exit a parse tree produced by LittleParser#else_part.
-    def exitElse_part(self, ctx:LittleParser.Else_partContext):
-        pass
-
-
     # Enter a parse tree produced by LittleParser#cond.
     def enterCond(self, ctx:LittleParser.CondContext):
         pass
@@ -540,14 +670,5 @@ class AST(ParseTreeListener):
 
     # Exit a parse tree produced by LittleParser#compop.
     def exitCompop(self, ctx:LittleParser.CompopContext):
-        pass
-
-
-    # Enter a parse tree produced by LittleParser#while_stmt.
-    def enterWhile_stmt(self, ctx:LittleParser.While_stmtContext):
-        pass
-
-    # Exit a parse tree produced by LittleParser#while_stmt.
-    def exitWhile_stmt(self, ctx:LittleParser.While_stmtContext):
         pass
 
