@@ -6,6 +6,7 @@ from LittleListener import LittleListener
 from LittleParser import LittleParser
 from SymbolTableBuilder import SymbolTableBuilder
 from AST import AST
+from AST_Walker import ast_walker
 
 def main(testcase_filename):
     lexer = LittleLexer(FileStream(testcase_filename))
@@ -20,8 +21,9 @@ def main(testcase_filename):
 
     a = AST(symbol_table_builder.symbol_table)
     walker.walk(a, tree)
-    a.print_ast()
 
+    aw = ast_walker(a.tree, a.symbol_table)
+    aw.print_tree()
 
     '''
     # Step 3 Code
