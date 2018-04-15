@@ -5,14 +5,9 @@ BEGIN
 	
 	FUNCTION VOID main()
 	BEGIN
-        a := (1+2)+3;
-        a := 20;
-        b := 10;
-        b := a*b+1;
-        b := a*b*a+1;
-        b := (a+b)*2;
-        c := (a + b);
-		a := a + b + c + 10;
-        b := (a + b) * c;
+        a := 2 * 1;
+        b := 5/4;
+        d := 2 * 3 - 4;
+        c := (5 * 4) + 3;
 	END
 END
