@@ -12,6 +12,7 @@ class bin_op():
         self.op = op
         self.code = []
         self.temp_register = None
+        self.type = None
 
 class leaf():
     def __init__(self, value=None, in_type=None):

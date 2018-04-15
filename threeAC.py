@@ -38,7 +38,7 @@ class threeAC:
     def generate_code(self, node):
         # Types of operations switch on the possibilities.
         if node.op == '+':
-            node.temp_register = 'T' + str(self.temp_value)
+            node.temp_register = 'T' + str( self.temp_value)
             node.code =  self.add_op(node,node.left, node.right)
             self.temp_value += 1
         elif node.op == '-':
