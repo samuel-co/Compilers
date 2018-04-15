@@ -45,8 +45,8 @@ class AST(ParseTreeListener):
             that are paired below an operation node'''
         if type(node) is leaf:
             # print("[{}]".format(node.value), end="")
-            # print("{}[{}]".format(node.value, node.type), end="")
-            print(node.value, end="")
+            print("{}[{}]".format(node.value, node.type), end="")
+            #print(node.value, end="")
             return
         if node.left and node.op != ':=': print("(", end="")
         self.recurse(node.left)
@@ -136,7 +136,10 @@ class AST(ParseTreeListener):
         if type(child) is LittleParser.PrimaryContext and child.expr():
             return self.visit_expr(child.expr())
         else:
-            return leaf(value=child.getText(), in_type=self.symbol_table[child.getText()] if child.getText() in self.symbol_table.keys() else "REAL")
+            return leaf(value=child.getText(), 
+                        in_type=self.symbol_table[child.getText()] if 
+                        child.getText() in self.symbol_table.keys() else 
+                        "FLOAT" if '.' in child.getText() else "INT")
 
     def is_end(self, child):
         ''' Check if the current node is the last node in its branch. Returns true if so. '''
@@ -183,17 +186,17 @@ class AST(ParseTreeListener):
 
     # Enter a parse tree produced by LittleParser#string_decl.
     def enterString_decl(self, ctx:LittleParser.String_declContext):
-        # return
-        self.root.op = ':='
+        return
+        # ':='
         # self.root.left = leaf(value=ctx.ident().getText())
-        self.root.left = self.visit_primary(ctx.ident())
+        #self.root.left = self.visit_primary(ctx.ident())
         # self.root.right = leaf(value=ctx.strt().getText())
-        self.root.right = self.visit_primary(ctx.strt())
+        #self.root.right = self.visit_primary(ctx.strt())
 
     # Exit a parse tree produced by LittleParser#string_decl.
     def exitString_decl(self, ctx:LittleParser.String_declContext):
-        # return
-        self.add_root()
+        return
+        #self.add_root()
 
     # Enter a parse tree produced by LittleParser#expr_prefix.
     def enterExpr_prefix(self, ctx:LittleParser.Expr_prefixContext):

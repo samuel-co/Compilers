@@ -6,7 +6,7 @@ from LittleListener import LittleListener
 from LittleParser import LittleParser
 from SymbolTableBuilder import SymbolTableBuilder
 from AST import AST
-from threeAC import threeAC
+from ThreeAC import ThreeAC
 
 def main(testcase_filename):
     lexer = LittleLexer(FileStream(testcase_filename))
@@ -23,8 +23,9 @@ def main(testcase_filename):
     walker.walk(a, tree)
     a.print_ast()
 
-    ac = threeAC(a.roots[0])
-    ac.post_order_traversal()
+    for i in range(len(a.roots)):
+        ac = ThreeAC(a.roots[i])
+        ac.post_order_traversal()
 
 
     '''
