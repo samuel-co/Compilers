@@ -102,14 +102,6 @@ class ast_walker:
             self.register_count += 1
         self.code += "cmp{} {} {}\n".format(child.left.type[:1].lower() if child.left.type != "FLOAT" else "r", left, right)
         self.code += "{} label{}\n".format(comp_dict[child.op], self.label_count-1)
-# jmp target             ; unconditional jump
-# jgt target             ; jump if (op1 of the preceeding cmp was) greater (than op2)
-# jlt target             ; jump if less than
-# jge target             ; jump if greater of equal
-# jle target             ; jump if less or equal
-# jeq target             ; jump if equal
-# jne target             ; jump if not equal
-
         self.recurse(child.left)
         print(child.op, end='')
         self.recurse(child.right)
@@ -138,6 +130,7 @@ class ast_walker:
     def print_bin(self, node):
         self.recurse(node)
         print()
+        self.code_expr(node)
 
     def print_ast(self):
         ''' Print out each tree conained within the roots list'''
@@ -161,5 +154,19 @@ class ast_walker:
         self.recurse(node.right)
         if node.left and node.op != ':=': print(")", end="")
 
+
+    def code_expr(self, child):
+        self.recurse_expr(child)
+
+    def recurse_expr(self, node):
+        if not node: return
+        if type(node) is leaf:
+            if not node.value in self.symbol_table.keys():
+                self.code += "move {} r{}\n".format(node.value, self.register_count)
+                node.value = "r{}".format(self.register_count)
+                self.register_count += 1
+            return
+        self.recurse_expr(node.left)
+        self.recurse_expr(node.right)
 
 
