@@ -9,6 +9,7 @@ class ast_walker:
 
         self.code = ""
         self.label_count = 1
+        self.register_count = 1
 
     def print_code(self):
         print(";{}".format(self.symbol_table))
@@ -28,6 +29,7 @@ class ast_walker:
         for item in self.tree:
             self.indent()
             self.node_prints[type(item)](item)
+        self.code += "sys halt"
 
     def print_func(self, child):
         print("entering function {}".format(child.name))
@@ -41,7 +43,7 @@ class ast_walker:
         print("exiting function {}".format(child.name))
 
     def print_if(self, child):
-        self.code += "jump {}{}{} label{}\n".format(child.cond.left.value, child.cond.op, child.cond.right.value, self.label_count)
+        # self.code += "jump {}{}{} label{}\n".format(child.cond.left.value, child.cond.op, child.cond.right.value, self.label_count)
         end_if_label = self.label_count
         self.label_count += 1
         print("if (", end="")
@@ -69,8 +71,8 @@ class ast_walker:
 
     def print_while(self, child):
         self.code += "label label{}\n".format(self.label_count)
-        end_label = "label label{}\n".format(self.label_count+1)
-        self.code += "jump {}{}{} label{}\n".format(child.cond.left.value, child.cond.op, child.cond.right.value, self.label_count+1)
+        end_label = "jmp label{}\nlabel label{}\n".format(self.label_count, self.label_count+1)
+        # self.code += "jump {}{}{} label{}\n".format(child.cond.left.value, child.cond.op, child.cond.right.value, self.label_count+1)
         self.label_count += 2
         print("while (", end="")
         self.print_comp(child.cond)
@@ -88,6 +90,26 @@ class ast_walker:
         self.code += "str {} {}\n".format(child.name, child.value)
 
     def print_comp(self, child):
+        comp_dict = {"<":"jge", ">":"jle", "<=":"jgt", ">=":"jlt", "!=":"jeq", "=":"jne"}
+        left, right = (child.left.value, child.right.value)
+        if not child.left.value in self.symbol_table.keys():
+            self.code += "move {} r{}\n".format(child.left.value, self.register_count)
+            left = "r{}".format(self.register_count)
+            self.register_count += 1
+        if not child.right.value in self.symbol_table.keys():
+            self.code += "move {} r{}\n".format(child.right.value, self.register_count)
+            right = "r{}".format(self.register_count)
+            self.register_count += 1
+        self.code += "cmp{} {} {}\n".format(child.left.type[:1].lower() if child.left.type != "FLOAT" else "r", left, right)
+        self.code += "{} label{}\n".format(comp_dict[child.op], self.label_count-1)
+# jmp target             ; unconditional jump
+# jgt target             ; jump if (op1 of the preceeding cmp was) greater (than op2)
+# jlt target             ; jump if less than
+# jge target             ; jump if greater of equal
+# jle target             ; jump if less or equal
+# jeq target             ; jump if equal
+# jne target             ; jump if not equal
+
         self.recurse(child.left)
         print(child.op, end='')
         self.recurse(child.right)
@@ -102,7 +124,7 @@ class ast_walker:
         if not node: return
         if type(node) is leaf:
             print(node.value, end=", ")
-            self.code += "{} {}\n".format(node.type[:1].lower(), node.value)
+            self.code += "{} {}\n".format(node.type[:1].lower() if node.type != "FLOAT" else "r", node.value)
             return
         if type(node.left) is leaf:
             print(node.op, end=":")
