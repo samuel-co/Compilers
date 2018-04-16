@@ -24,6 +24,7 @@ def main(testcase_filename):
 
     aw = ast_walker(a.tree, a.symbol_table)
     aw.print_tree()
+    aw.print_code()
 
     '''
     # Step 3 Code

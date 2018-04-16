@@ -253,12 +253,11 @@ class AST(ParseTreeListener):
     # Enter a parse tree produced by LittleParser#string_decl.
     def enterString_decl(self, ctx:LittleParser.String_declContext):
         # return
-        self.root = bin_op()
-        self.root.op = ':='
-        self.root.left = leaf(value=ctx.ident().getText(), in_type="STRING")
-        # self.root.left = self.visit_primary(ctx.ident())
-        self.root.right = leaf(value=ctx.strt().getText(), in_type="STRING")
-        # self.root.right = self.visit_primary(ctx.strt())
+        # self.root = bin_op()
+        # self.root.op = ':='
+        # self.root.left = leaf(value=ctx.ident().getText(), in_type="STRING")
+        # self.root.right = leaf(value=ctx.strt().getText(), in_type="STRING")
+        self.root = str_ass(name=ctx.ident().getText(), value=ctx.strt().getText())
 
     # Exit a parse tree produced by LittleParser#string_decl.
     def exitString_decl(self, ctx:LittleParser.String_declContext):

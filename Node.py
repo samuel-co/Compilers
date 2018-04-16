@@ -10,6 +10,11 @@ class stack():
         self.stack = self.stack[:-1]
         return out
 
+class str_ass():
+    def __init__(self, name=None, value=None):
+        self.name = name
+        self.value = value
+
 class func_op():
     def __init__(self, name=None):
         self.name = name
