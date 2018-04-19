@@ -1,4 +1,5 @@
 from Node import *
+from threeAC import *
 
 class ast_walker:
 
@@ -6,15 +7,16 @@ class ast_walker:
         self.tree = tree
         self.symbol_table = symbol_table
         self.indentation = 0
+        self.ac = ThreeAC()
 
         self.code = ""
         self.label_count = 1
-        self.register_count = 1
+        self.register_count = 0
 
     def print_code(self):
         print(";{}".format(self.symbol_table))
         print(";-----PRINTING CODE-----")
-        for key in self.symbol_table.keys():
+        for key in sorted(self.symbol_table.keys()):
             if self.symbol_table[key] != "STRING": print("var {}".format(key))
         print(self.code)
 
@@ -91,15 +93,10 @@ class ast_walker:
 
     def print_comp(self, child):
         comp_dict = {"<":"jge", ">":"jle", "<=":"jgt", ">=":"jlt", "!=":"jeq", "=":"jne"}
-        left, right = (child.left.value, child.right.value)
-        if not child.left.value in self.symbol_table.keys():
-            self.code += "move {} r{}\n".format(child.left.value, self.register_count)
-            left = "r{}".format(self.register_count)
-            self.register_count += 1
-        if not child.right.value in self.symbol_table.keys():
-            self.code += "move {} r{}\n".format(child.right.value, self.register_count)
-            right = "r{}".format(self.register_count)
-            self.register_count += 1
+        self.recurse_expr(child.left)
+        left = child.left.value if type(child.left) is leaf else child.left.temp_register
+        self.recurse_expr(child.right)
+        right = child.right.value if type(child.right) is leaf else child.right.temp_register
         self.code += "cmp{} {} {}\n".format(child.left.type[:1].lower() if child.left.type != "FLOAT" else "r", left, right)
         self.code += "{} label{}\n".format(comp_dict[child.op], self.label_count-1)
         self.recurse(child.left)
@@ -156,17 +153,31 @@ class ast_walker:
 
 
     def code_expr(self, child):
-        self.recurse_expr(child)
+        current_type = "i" if child.left.type == "INT" else "r"
+        self.op_commands = {"+":"add{}".format(current_type), "-":"sub{}".format(current_type), "*":"mul{}".format(current_type), "/":"div{}".format(current_type)}
+        # self.code += "CALLING AST-----\n"
+        # print(self.ac.post_order_traversal(child))
+        self.recurse_expr(child.right)
+        self.code += "move {} {}\n".format(child.right.value if type(child.right) is leaf else
+                child.right.temp_register, child.left.value)
 
     def recurse_expr(self, node):
         if not node: return
         if type(node) is leaf:
-            if not node.value in self.symbol_table.keys():
-                self.code += "move {} r{}\n".format(node.value, self.register_count)
-                node.value = "r{}".format(self.register_count)
-                self.register_count += 1
+            # if not node.value in self.symbol_table.keys():
+            self.code += "move {} r{}\n".format(node.value, self.register_count)
+            node.value = "r{}".format(self.register_count)
+            self.register_count += 1
             return
+
         self.recurse_expr(node.left)
         self.recurse_expr(node.right)
+        if node.op != ":=":
+            self.code += "{} {} {}\n".format(self.op_commands[node.op], node.right.value if type(node.right) is leaf else
+                    node.right.temp_register, node.left.value if type(node.left) is leaf else
+                    node.left.temp_register)
+            node.temp_register = "{}".format(node.left.value if type(node.left) is leaf else node.left.temp_register)
+
+
 
 
