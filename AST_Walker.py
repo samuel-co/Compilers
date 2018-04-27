@@ -1,5 +1,4 @@
 from Node import *
-from threeAC import *
 
 class ast_walker:
 
@@ -7,7 +6,6 @@ class ast_walker:
         self.tree = tree
         self.symbol_table = symbol_table
         self.indentation = 0
-        self.ac = ThreeAC()
 
         self.code = ""
         self.label_count = 1
